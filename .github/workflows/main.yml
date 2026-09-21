@@ -10,13 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download project
+      - name: Checkout project
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Prepare Capacitor project
         run: |
@@ -32,17 +32,12 @@ jobs:
             --exclude='android' \
             ./ www/
 
-          cat > capacitor.config.ts <<'EOF'
-          import type { CapacitorConfig } from '@capacitor/cli';
-
-          const config: CapacitorConfig = {
-            appId: 'com.betachat.app',
-            appName: 'BetaChat',
-            webDir: 'www',
-            bundledWebRuntime: false
-          };
-
-          export default config;
+          cat > capacitor.config.json <<'EOF'
+          {
+            "appId": "com.betachat.app",
+            "appName": "BetaChat",
+            "webDir": "www"
+          }
           EOF
 
       - name: Create Android project
