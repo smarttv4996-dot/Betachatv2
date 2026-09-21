@@ -1,0 +1,11 @@
+{
+  "name": "betachat",
+  "private": true,
+  "description": "BetaChat — real-time peer chat with friends, groups, stories, and AI bot",
+  "dependencies": {
+    "firebase-admin": "^14.2.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

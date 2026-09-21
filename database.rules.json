@@ -1,0 +1,235 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "uids": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.isString() && root.child('usernames').child(newData.val()).exists()"
+      }
+    },
+    "usernames": {
+      ".read": "auth != null",
+      "$key": {
+        ".write": "auth != null && ( !data.exists() || ( ($key === 'ahsanul arifin' || $key === 'founder' || $key === 'owner') && !root.child('ownerClaimed').child($key).exists() ) )"
+      }
+    },
+    "ownerClaimed": {
+      ".read": "auth != null",
+      "$key": {
+        ".write": "auth != null && !data.exists() && newData.val() === true && ( $key === 'ahsanul arifin' || $key === 'founder' || $key === 'owner' ) && root.child('uids').child(auth.uid).val() === $key"
+      }
+    },
+    "userEmails": {
+      ".read": true,
+      "$key": {
+        ".write": "auth != null && !data.exists() && root.child('uids').child(auth.uid).val() === $key"
+      }
+    },
+    "profiles": {
+      ".read": "auth != null",
+      "$key": {
+        ".write": "auth != null && root.child('uids').child(auth.uid).val() === $key"
+      }
+    },
+    "admins": {
+      ".read": "auth != null",
+      "$key": {
+        ".write": "auth != null && (root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner')"
+      }
+    },
+    "verified": {
+      ".read": "auth != null",
+      "$key": {
+        ".write": "auth != null && ( root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner' || ($key === 'bot' && !data.exists() && newData.val() === true) )"
+      }
+    },
+    "blocked": {
+      ".read": "auth != null && (root.child('admins').child(root.child('uids').child(auth.uid).val()).val() === true || root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner')",
+      "$key": {
+        ".read": "auth != null && (root.child('uids').child(auth.uid).val() === $key || root.child('admins').child(root.child('uids').child(auth.uid).val()).val() === true || root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner')",
+        ".write": "auth != null && (root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner')"
+      }
+    },
+    "hiddenFromAdmins": {
+      ".read": "auth != null && (root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner')",
+      "$key": {
+        ".write": "auth != null && (root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner')"
+      }
+    },
+    "usergroups": {
+      "$key": {
+        ".read": "auth != null && root.child('uids').child(auth.uid).val() === $key",
+        "$code": {
+          ".write": "auth != null && ( root.child('uids').child(auth.uid).val() === $key || root.child('groups').child($code).child('admins').child(root.child('uids').child(auth.uid).val()).val() === true || root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists() || root.child('groups').child($code).child('isBotChat').val() === true )"
+        }
+      }
+    },
+    "groups": {
+      ".read": "auth != null",
+      "$code": {
+        ".write": "auth != null && !data.exists() && ( ( newData.child('isBotChat').val() === true && newData.child('members').child('bot').exists() && !root.child('blocked').child(root.child('uids').child(auth.uid).val()).exists() ) || ( newData.child('isDirect').val() === true && newData.child('isBotChat').val() !== true && $code.beginsWith('dm_') === true && newData.child('members').numChildren() === 2 && newData.child('members').child(root.child('uids').child(auth.uid).val()).exists() ) || ( newData.child('isDirect').val() !== true && newData.child('admins').child(root.child('uids').child(auth.uid).val()).val() === true && newData.child('members').child(root.child('uids').child(auth.uid).val()).exists() ) )",
+        "admins": {
+          "$key": {
+            ".write": "auth != null && root.child('groups').child($code).child('admins').child(root.child('uids').child(auth.uid).val()).val() === true"
+          }
+        },
+        "members": {
+          "$key": {
+            ".write": "auth != null && ( root.child('uids').child(auth.uid).val() === $key || root.child('groups').child($code).child('admins').child(root.child('uids').child(auth.uid).val()).val() === true || ( !data.exists() && root.child('groups').child($code).child('isDirect').val() !== true && root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists() ) )"
+          }
+        },
+        "photo": {
+          ".write": "auth != null && ( root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists() || root.child('groups').child($code).child('isBotChat').val() === true || ( root.child('admins').child(root.child('uids').child(auth.uid).val()).val() === true || root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner' ) )"
+        },
+        "lastActivity": {
+          ".write": "auth != null && ( root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists() || root.child('groups').child($code).child('isBotChat').val() === true )"
+        },
+        "lastSender": {
+          ".write": "auth != null && ( root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists() || root.child('groups').child($code).child('isBotChat').val() === true )"
+        },
+        "pinnedMessageId": {
+          ".write": "auth != null && root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists()"
+        },
+        "disappearingSeconds": {
+          ".write": "auth != null && root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists()"
+        },
+        "name": {
+          ".write": "auth != null && root.child('groups').child($code).child('admins').child(root.child('uids').child(auth.uid).val()).val() === true"
+        },
+        "description": {
+          ".write": "auth != null && root.child('groups').child($code).child('admins').child(root.child('uids').child(auth.uid).val()).val() === true"
+        },
+        "lastMessage": {
+          ".write": "auth != null && (root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists() || root.child('groups').child($code).child('isBotChat').val() === true)"
+        }
+      }
+    },
+    "joinRequests": {
+      "$code": {
+        ".read": "auth != null && root.child('groups').child($code).child('admins').child(root.child('uids').child(auth.uid).val()).val() === true",
+        "$key": {
+          ".read": "auth != null && ( root.child('uids').child(auth.uid).val() === $key || root.child('groups').child($code).child('admins').child(root.child('uids').child(auth.uid).val()).val() === true )",
+          ".write": "auth != null && ( ( root.child('uids').child(auth.uid).val() === $key && !root.child('blocked').child($key).exists() ) || root.child('groups').child($code).child('admins').child(root.child('uids').child(auth.uid).val()).val() === true )"
+        }
+      }
+    },
+    "messages": {
+      "$code": {
+        ".read": "auth != null && ( root.child('groups').child($code).child('isBotChat').val() === true ? ( root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists() || ( root.child('admins').child(root.child('uids').child(auth.uid).val()).val() === true || root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner' ) ) : root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists() )",
+        ".write": "auth != null && !data.exists() && ( root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists() || root.child('groups').child($code).child('isBotChat').val() === true )",
+        "$msgId": {
+          ".write": "auth != null && ( (root.child('groups').child($code).child('isBotChat').val() === true && root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists() && newData.child('sender').val() === 'BetaChat Bot') || (!data.exists() && root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists() && newData.child('sender').val() === root.child('usernames').child(root.child('uids').child(auth.uid).val()).val()) || (root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists() && data.child('sender').val() === root.child('usernames').child(root.child('uids').child(auth.uid).val()).val() && newData.child('sender').val() === data.child('sender').val() && newData.child('ts').val() === data.child('ts').val() && newData.child('clientId').val() === data.child('clientId').val()) || root.child('groups').child($code).child('admins').child(root.child('uids').child(auth.uid).val()).val() === true || root.child('admins').child(root.child('uids').child(auth.uid).val()).val() === true || root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner')",
+          ".validate": "newData.val() === true || (newData.hasChildren() && newData.child('sender').isString() && newData.child('ts').isNumber() && newData.child('text').isString() && newData.child('text').val().length <= 5000 && (!newData.child('image').exists() || (newData.child('image').isString() && newData.child('image').val().length <= 750000)) && (!newData.child('file').exists() || (newData.child('file').isString() && newData.child('file').val().length <= 950000)))"
+        }
+      }
+    },
+    "reads": {
+      "$code": {
+        ".read": "auth != null && root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists()",
+        "$key": {
+          ".write": "auth != null && root.child('uids').child(auth.uid).val() === $key && root.child('groups').child($code).child('members').child($key).exists()"
+        }
+      }
+    },
+    "typing": {
+      "$code": {
+        ".read": "auth != null && root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists()",
+        "$key": {
+          ".write": "auth != null && root.child('uids').child(auth.uid).val() === $key && root.child('groups').child($code).child('members').child($key).exists()"
+        }
+      }
+    },
+    "reactions": {
+      "$code": {
+        ".read": "auth != null && root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists()",
+        "$msgId": {
+          ".write": "auth != null && root.child('groups').child($code).child('members').child(root.child('uids').child(auth.uid).val()).exists() && ( root.child('messages').child($code).child($msgId).child('sender').val() === root.child('usernames').child(root.child('uids').child(auth.uid).val()).val() || root.child('groups').child($code).child('admins').child(root.child('uids').child(auth.uid).val()).val() === true || root.child('admins').child(root.child('uids').child(auth.uid).val()).val() === true || root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner' )",
+          "$emoji": {
+            "$key": {
+              ".write": "auth != null && root.child('uids').child(auth.uid).val() === $key && root.child('groups').child($code).child('members').child($key).exists()"
+            }
+          }
+        }
+      }
+    },
+    "presence": {
+      "$key": {
+        ".read": "auth != null && ( root.child('uids').child(auth.uid).val() === $key || root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner' || ( root.child('profiles').child($key).child('hideLastSeen').val() !== true && root.child('friends').child($key).child(root.child('uids').child(auth.uid).val()).exists() ) )",
+        ".write": "auth != null && root.child('uids').child(auth.uid).val() === $key"
+      }
+    },
+    "friends": {
+      "$key": {
+        ".read": "auth != null && root.child('uids').child(auth.uid).val() === $key",
+        "$other": {
+          ".write": "auth != null && ( root.child('uids').child(auth.uid).val() === $key || root.child('uids').child(auth.uid).val() === $other )"
+        }
+      }
+    },
+    "friend_requests": {
+      "$key": {
+        ".read": "auth != null && root.child('uids').child(auth.uid).val() === $key",
+        "$from": {
+          ".write": "auth != null && ( root.child('uids').child(auth.uid).val() === $key || root.child('uids').child(auth.uid).val() === $from )"
+        }
+      }
+    },
+    "sent_requests": {
+      "$key": {
+        ".read": "auth != null && root.child('uids').child(auth.uid).val() === $key",
+        "$to": {
+          ".write": "auth != null && ( root.child('uids').child(auth.uid).val() === $key || root.child('uids').child(auth.uid).val() === $to )"
+        }
+      }
+    },
+    "stories": {
+      "$key": {
+        ".read": "auth != null && ( root.child('uids').child(auth.uid).val() === $key || root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner' || root.child('friends').child($key).child(root.child('uids').child(auth.uid).val()).exists() )",
+        ".write": "auth != null && ( root.child('uids').child(auth.uid).val() === $key || ( root.child('admins').child(root.child('uids').child(auth.uid).val()).val() === true || root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner' ) )",
+        "$storyId": {
+          "viewers": {
+            "$viewerKey": {
+              ".write": "auth != null && root.child('uids').child(auth.uid).val() === $viewerKey"
+            }
+          }
+        }
+      }
+    },
+    "storyReactions": {
+      "$authorKey": {
+        ".read": "auth != null && ( root.child('uids').child(auth.uid).val() === $authorKey || root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner' || root.child('friends').child($authorKey).child(root.child('uids').child(auth.uid).val()).exists() )",
+        "$storyId": {
+          ".write": "auth != null && ( root.child('uids').child(auth.uid).val() === $authorKey || ( root.child('admins').child(root.child('uids').child(auth.uid).val()).val() === true || root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner' ) )",
+          "$reactorKey": {
+            ".write": "auth != null && root.child('uids').child(auth.uid).val() === $reactorKey"
+          }
+        }
+      }
+    },
+    "botConversations": {
+      ".read": "auth != null && (root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner' || root.child('admins').child(root.child('uids').child(auth.uid).val()).val() === true)",
+      "$key": {
+        ".write": "auth != null && root.child('uids').child(auth.uid).val() === $key"
+      }
+    },
+    "appointments": {
+      ".read": "auth != null && (root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner' || root.child('admins').child(root.child('uids').child(auth.uid).val()).val() === true)",
+      "$id": {
+        ".write": "auth != null && ( !data.exists() ? (!root.child('blocked').child(root.child('uids').child(auth.uid).val()).exists() && newData.child('userKey').val() === root.child('uids').child(auth.uid).val() && newData.child('userName').val() === root.child('usernames').child(root.child('uids').child(auth.uid).val()).val()) : ( root.child('admins').child(root.child('uids').child(auth.uid).val()).val() === true || root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner' ) )"
+      }
+    },
+    "reports": {
+      ".read": "auth != null && (root.child('admins').child(root.child('uids').child(auth.uid).val()).val() === true || root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner')",
+      "$id": {
+        ".write": "auth != null && (!data.exists() ? newData.child('reporterKey').val() === root.child('uids').child(auth.uid).val() : (root.child('admins').child(root.child('uids').child(auth.uid).val()).val() === true || root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner'))"
+      }
+    },
+    "auditLog": {
+      ".read": "auth != null && (root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner')",
+      "$id": {
+        ".write": "auth != null && (root.child('uids').child(auth.uid).val() === 'ahsanul arifin' || root.child('uids').child(auth.uid).val() === 'founder' || root.child('uids').child(auth.uid).val() === 'owner')"
+      }
+    }
+  }
+}
