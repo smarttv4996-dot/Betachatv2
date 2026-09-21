@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>BetaChat</title>
+<meta name="description" content="BetaChat — private real-time chat with friends, groups, stories, and a helpful bot. Stay close to your people." />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#10181B" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-180.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="BetaChat" />
+<link rel="stylesheet" href="css/style.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="toast-stack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
+  <div id="connection-banner" class="connection-banner hidden" role="status">
+    <span id="connection-banner-icon" class="connection-banner-icon">◌</span>
+    <span id="connection-banner-text">You’re offline. Messages will send when you reconnect.</span>
+    <button id="connection-retry-btn" class="connection-retry-btn">Retry</button>
+  </div>
+
+  <!-- SPLASH (shown while we check if you're already logged in) -->
+  <div id="screen-splash" class="screen centered">
+    <div class="login-box">
+      <div class="logo">B</div>
+      <div class="title">BetaChat</div>
+      <div class="loader"></div>
+    </div>
+  </div>
+
+  <!-- APP LOCK SCREEN (native only) -->
+  <div id="screen-applock" class="screen centered hidden">
+    <div class="login-box applock-box">
+      <div class="applock-brand"><div class="logo">B</div><span>BetaChat</span></div>
+      <div class="lock-symbol" aria-hidden="true">⌁</div>
+      <div class="title">Welcome back</div>
+      <div id="applock-status" class="applock-status">Unlock BetaChat to continue.</div>
+      <button id="applock-retry-btn" class="button full">Unlock</button>
+    </div>
+  </div>
+
+  <!-- LOGIN SCREEN -->
+  <div id="screen-login" class="screen centered hidden">
+    <div class="auth-orb auth-orb-one"></div>
+    <div class="auth-orb auth-orb-two"></div>
+    <div class="auth-layout">
+      <section class="auth-welcome" aria-label="Welcome to BetaChat">
+        <div class="brand-lockup">
+          <div class="logo" aria-hidden="true">B</div>
+          <span class="brand-name">BetaChat</span>
+        </div>
+        <div class="auth-welcome-copy">
+          <span class="eyebrow">YOUR PEOPLE, ONE PLACE</span>
+          <h1>Stay close to<br><em>your people.</em></h1>
+          <p>A bright little corner for sharing the everyday—messages, stories, and all the moments in between.</p>
+        </div>
+        <div class="auth-doodles" aria-hidden="true">
+          <span class="doodle doodle-heart">♥</span><span class="doodle doodle-star">✦</span><span class="doodle doodle-smile">☺</span>
+        </div>
+        <div class="auth-trust"><span class="auth-trust-dot"></span> Private conversations, made simple</div>
+      </section>
+      <div class="login-box">
+        <div class="auth-mobile-brand">
+          <div class="logo" aria-hidden="true">B</div><span>BetaChat</span>
+        </div>
+        <div class="auth-card-heading">
+          <div id="auth-card-title" class="title">Welcome back</div>
+          <div id="auth-card-subtitle" class="subtitle">Sign in to pick up where you left off.</div>
+        </div>
+
+      <div class="modal-tabs">
+        <button id="auth-tab-signin" class="tab-btn active">Sign in</button>
+        <button id="auth-tab-signup" class="tab-btn">Create account</button>
+      </div>
+
+      <div id="auth-pane-signin">
+        <input id="signin-username" class="input" placeholder="Username" maxlength="24" autocomplete="username" />
+        <div class="password-field"><input id="signin-password" class="input" type="password" placeholder="Password" autocomplete="current-password" /><button type="button" class="password-toggle" data-password-target="signin-password" aria-label="Show password">Show</button></div>
+        <div id="signin-error" class="error"></div>
+        <button id="signin-btn" class="button full">Sign in</button>
+        <div class="forgot-password-link"><a href="#" id="forgot-password-link">Forgot password?</a></div>
+      </div>
+
+      <div id="auth-pane-forgot" class="hidden">
+        <div class="subtitle" style="margin-top:0;">Enter your username — we'll email a reset link to the address you signed up with.</div>
+        <input id="forgot-username" class="input" placeholder="Username" maxlength="24" autocomplete="username" />
+        <div id="forgot-error" class="error"></div>
+        <div id="forgot-success" class="success hidden">Reset link sent — check your email (and spam folder).</div>
+        <button id="forgot-btn" class="button full">Send reset link</button>
+        <div class="forgot-password-link"><a href="#" id="back-to-signin-link">Back to sign in</a></div>
+      </div>
+
+      <div id="auth-pane-signup" class="hidden">
+        <input id="signup-username" class="input" placeholder="Choose a username (letters, numbers, _)" maxlength="24" autocomplete="username" />
+        <input id="signup-email" class="input" type="email" placeholder="Email (used only for password reset)" autocomplete="email" />
+        <div class="password-field"><input id="signup-password" class="input" type="password" placeholder="Choose a password (6+ characters)" autocomplete="new-password" /><button type="button" class="password-toggle" data-password-target="signup-password" aria-label="Show password">Show</button></div>
+        <div id="signup-error" class="error"></div>
+        <button id="signup-btn" class="button full">Create account</button>
+      </div>
+
+      <!-- Google sign-in stays visible under both the sign in and create account panes -->
+      <div id="auth-google-row" class="auth-divider-row">
+        <div class="auth-divider"><span>or</span></div>
+        <button id="google-signin-btn" class="button ghost full">Continue with Google</button>
+      </div>
+
+      <!-- Shown once, right after a brand-new Google account signs in, so it can claim a username -->
+      <div id="auth-pane-google-username" class="hidden">
+        <div class="subtitle" style="margin-top:0;">Pick a username to finish setting up your account.</div>
+        <input id="google-username" class="input" placeholder="Choose a username (letters, numbers, _)" maxlength="24" autocomplete="username" />
+        <div id="google-username-error" class="error"></div>
+        <button id="google-username-btn" class="button full">Continue</button>
+        <div class="forgot-password-link"><a href="#" id="google-username-cancel-link">Use a different Google account</a></div>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="screen-app" class="page hidden">
+    <div id="sidebar" class="sidebar">
+      <div class="sidebar-top">
+        <div class="sidebar-topbar">
+          <div class="title">BetaChat</div>
+          <button id="sidebar-menu-btn" class="icon-btn" title="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg></button>
+        </div>
+        <div class="sidebar-user">
+          <div id="avatar-me" class="avatar small clickable" title="Edit profile"></div>
+          <div id="sidebar-user-name" class="sidebar-user-name"></div>
+        </div>
+      </div>
+      <div id="stories-bar" class="stories-bar"></div>
+      <input id="story-photo-input" type="file" accept="image/*" class="hidden" />
+      <div class="sidebar-new">
+        <button id="new-chat-btn" class="button full">+ New chat</button>
+      </div>
+      <div class="chat-search-wrap">
+        <span aria-hidden="true">⌕</span><input id="chat-list-search" type="search" placeholder="Search conversations" autocomplete="off" /><button id="chat-list-search-clear" class="chat-search-clear hidden" aria-label="Clear conversation search">×</button>
+      </div>
+      <div class="chat-list-heading"><span>Recent chats</span><span id="chat-list-count"></span></div>
+      <div id="chat-list" class="chat-list"></div>
+    </div>
+
+    <div id="chat-panel" class="chat-panel">
+      <div id="empty-state" class="empty-state">
+        <div class="empty-icon">💬</div>
+        <div class="empty-title">Your conversations, all in one place</div>
+        <div class="empty-copy">Pick a recent chat, or start something new with your people.</div>
+        <div class="empty-actions"><button id="empty-new-chat-btn" class="button">Start a new chat</button></div>
+        <div class="empty-suggestions"><span>Quick start</span><div><button data-empty-action="Study group">Study</button><button data-empty-action="Project ideas">Brainstorm</button><button data-empty-action="Explain this">Explain</button></div></div>
+      </div>
+
+      <div id="chat-view" class="chat-view hidden">
+        <div class="chat-header">
+          <button id="back-btn" class="back-btn">‹</button>
+          <div id="avatar-chat" class="avatar" title="Group photo"></div>
+          <div class="chat-header-info">
+            <div id="chat-name" class="chat-name"></div>
+            <div id="chat-meta" class="chat-meta"></div>
+          </div>
+          <div class="chat-header-actions">
+            <button id="chat-settings-btn" class="icon-btn" title="Chat settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .3 1.9l.1.1-2.1 2.1-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-3v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1-2.1-2.1.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H5.3v-3h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1 2.1-2.1.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5v-.2h3v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 2.1 2.1-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2v3h-.2a1.7 1.7 0 0 0-1.5 1Z"/></svg></button>
+          </div>
+        </div>
+        <!-- hidden inputs still used by the settings panel actions below -->
+        <input id="group-photo-input" type="file" accept="image/*" class="hidden" />
+        <div id="search-bar" class="search-bar hidden">
+          <input id="search-input" class="input" placeholder="Search messages…" />
+          <button id="search-close-btn" class="icon-btn" title="Close search">✕</button>
+        </div>
+        <div id="pinned-banner" class="pinned-banner hidden">
+          <span class="pinned-icon">📌</span>
+          <div id="pinned-banner-text" class="pinned-banner-text"></div>
+          <button id="pinned-banner-unpin" class="link-btn pinned-banner-unpin">Unpin</button>
+        </div>
+        <div id="messages" class="messages"></div>
+        <button id="jump-latest-btn" class="jump-latest-btn hidden" aria-label="Jump to latest messages">↓ <span>Latest</span></button>
+        <div id="reply-preview-bar" class="reply-preview-bar hidden">
+          <div class="reply-preview-info">
+            <div id="reply-preview-sender" class="reply-preview-sender"></div>
+            <div id="reply-preview-text" class="reply-preview-text"></div>
+          </div>
+          <button id="reply-preview-cancel" class="icon-btn" title="Cancel reply">✕</button>
+        </div>
+        <div id="mention-picker" class="mention-picker hidden"></div>
+        <div class="composer">
+          <label for="image-input" class="icon-btn attach-btn" title="Send a photo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m5.5 17 4.5-4 3 2.5 2.2-2 3.3 3.5"/></svg></label>
+          <input id="image-input" type="file" accept="image/*" class="hidden" />
+          <label for="file-input" class="icon-btn attach-btn" title="Send a file"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m20.3 11-8.2 8.2a5 5 0 0 1-7.1-7.1l8.2-8.2a3.4 3.4 0 0 1 4.8 4.8l-8.3 8.2a1.7 1.7 0 0 1-2.4-2.4l7.5-7.5"/></svg></label>
+          <input id="file-input" type="file" class="hidden" />
+          <input id="draft-input" class="input" placeholder="Message" maxlength="5000" />
+          <span id="draft-count" class="draft-count hidden">0 / 5000</span>
+          <button id="send-btn" class="send-btn" aria-label="Send message">↑</button>
+        </div>
+        <div id="send-status" class="send-status hidden" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR MENU (consolidated: edit profile, friends, admin tools, theme, notifications, sign out) -->
+  <div id="modal-sidebar-menu-backdrop" class="modal-backdrop hidden">
+    <div class="modal chat-settings-modal">
+      <div class="modal-header">
+        <div class="modal-title">Menu</div>
+        <button id="sidebar-menu-close-btn" class="icon-btn">✕</button>
+      </div>
+      <div class="chat-settings-list">
+        <div class="settings-section-label">Account</div>
+        <button id="edit-profile-btn" class="chat-settings-row" title="Edit profile">
+          <span class="chat-settings-row-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.1-.9L19 8.2a2.2 2.2 0 0 0-3.1-3.1L5 16l-1 4Z"/><path d="m13.8 5.3 4.9 4.9"/></svg></span>
+          <span class="chat-settings-row-label">Edit profile</span>
+          <span class="chat-settings-row-arrow">›</span>
+        </button>
+        <button id="manage-users-btn" class="chat-settings-row hidden" title="Manage users">
+          <span class="chat-settings-row-icon">🛡️</span>
+          <span class="chat-settings-row-label">Manage users</span>
+          <span class="chat-settings-row-arrow">›</span>
+        </button>
+        <button id="friends-btn" class="chat-settings-row" title="Friends">
+          <span class="chat-settings-row-icon">👥</span><span class="chat-settings-row-label">Friends</span><span id="friends-badge" class="badge-dot hidden"></span><span class="chat-settings-row-arrow">›</span>
+        </button>
+        <button id="owner-dashboard-btn" class="chat-settings-row hidden" title="Owner dashboard">
+          <span class="chat-settings-row-icon">📊</span><span class="chat-settings-row-label">Owner dashboard</span><span class="chat-settings-row-arrow">›</span>
+        </button>
+        <button id="reports-btn" class="chat-settings-row hidden" title="Reports">
+          <span class="chat-settings-row-icon">⚑</span><span class="chat-settings-row-label">Reports</span><span id="reports-badge" class="badge-dot hidden"></span><span class="chat-settings-row-arrow">›</span>
+        </button>
+        <button id="bot-requests-btn" class="chat-settings-row hidden" title="Admin help requests & bot conversations">
+          <span class="chat-settings-row-icon">🤖</span>
+          <span class="chat-settings-row-label">Admin & bot requests</span>
+          <span class="chat-settings-row-arrow">›</span>
+        </button>
+        <div class="settings-section-label">Preferences</div>
+        <button id="theme-toggle-btn" class="chat-settings-row" title="Toggle dark/light mode">
+          <span id="theme-toggle-icon" class="chat-settings-row-icon">🌙</span>
+          <span class="chat-settings-row-label">Dark / light mode</span>
+        </button>
+        <button id="notify-toggle-btn" class="chat-settings-row" title="Enable notifications">
+          <span id="notify-toggle-icon" class="chat-settings-row-icon">🔕</span>
+          <span class="chat-settings-row-label">Notifications</span>
+          <span id="notify-toggle-status" class="chat-settings-row-sub"></span>
+        </button>
+      </div>
+      <div class="chat-settings-list settings-danger-zone">
+        <div class="settings-section-label">Account actions</div>
+        <button id="logout-btn" class="chat-settings-row danger" title="Sign out">
+          <span class="chat-settings-row-icon">⎋</span>
+          <span class="chat-settings-row-label">Sign out</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT SETTINGS PANEL (consolidated: wallpaper, disappearing msgs, search, members, add, leave) -->
+  <div id="modal-chat-settings-backdrop" class="modal-backdrop hidden">
+    <div class="modal chat-settings-modal">
+      <div class="modal-header">
+        <div class="modal-title">Chat info</div>
+        <button id="chat-settings-close-btn" class="icon-btn">✕</button>
+      </div>
+
+      <div class="chat-settings-summary">
+        <div id="chat-settings-avatar" class="avatar xlarge"></div>
+        <div id="chat-settings-name" class="chat-settings-name"></div>
+        <div id="chat-settings-meta" class="chat-settings-meta"></div>
+      </div>
+
+      <div class="chat-settings-list">
+        <div class="settings-section-label">Appearance</div>
+        <button id="wallpaper-btn" class="chat-settings-row" title="Chat wallpaper">
+          <span class="chat-settings-row-icon">🎨</span>
+          <span class="chat-settings-row-label">Chat wallpaper</span>
+          <span class="chat-settings-row-arrow">›</span>
+        </button>
+        <div class="settings-section-label">Privacy</div>
+        <button id="disappearing-btn" class="chat-settings-row" title="Disappearing messages">
+          <span class="chat-settings-row-icon">⏱</span>
+          <span class="chat-settings-row-label">Disappearing messages</span>
+          <span id="disappearing-status" class="chat-settings-row-sub">Off</span>
+          <span class="chat-settings-row-arrow">›</span>
+        </button>
+        <button id="mute-chat-btn" class="chat-settings-row" title="Mute this chat">
+          <span class="chat-settings-row-icon">🔕</span><span class="chat-settings-row-label">Mute notifications</span><span id="mute-chat-status" class="chat-settings-row-sub">Off</span>
+        </button>
+        <div class="settings-section-label">Chat</div>
+        <button id="search-btn" class="chat-settings-row" title="Search messages">
+          <span class="chat-settings-row-icon">🔍</span>
+          <span class="chat-settings-row-label">Search messages</span>
+          <span class="chat-settings-row-arrow">›</span>
+        </button>
+        <button id="members-btn" class="chat-settings-row" title="View members">
+          <span class="chat-settings-row-icon">👥</span>
+          <span id="chat-settings-members-label" class="chat-settings-row-label">Members</span>
+          <span class="chat-settings-row-arrow">›</span>
+        </button>
+        <button id="copy-invite-link-btn" class="chat-settings-row" title="Copy invite link">
+          <span class="chat-settings-row-icon">🔗</span><span class="chat-settings-row-label">Copy invite link</span><span class="chat-settings-row-arrow">›</span>
+        </button>
+        <div class="settings-section-label">Group</div>
+        <button id="group-edit-btn" class="chat-settings-row" title="Edit group details">
+          <span class="chat-settings-row-icon">✏️</span><span class="chat-settings-row-label">Edit group details</span><span class="chat-settings-row-arrow">›</span>
+        </button>
+        <button id="add-member-btn" class="chat-settings-row" title="Add someone to this chat">
+          <span class="chat-settings-row-icon">➕</span>
+          <span class="chat-settings-row-label">Add member</span>
+          <span class="chat-settings-row-arrow">›</span>
+        </button>
+      </div>
+
+      <div class="chat-settings-list settings-danger-zone">
+        <div class="settings-section-label">Danger zone</div>
+        <button id="leave-chat-btn" class="chat-settings-row danger" title="Leave this chat">
+          <span class="chat-settings-row-icon">🚪</span>
+          <span class="chat-settings-row-label">Leave chat</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEMBERS MODAL -->
+  <div id="modal-members-backdrop" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-title">Members</div>
+      <div id="members-list" class="members-list"></div>
+      <div class="modal-gap"></div>
+      <button id="members-close-btn" class="button full ghost">Close</button>
+    </div>
+  </div>
+
+  <!-- NEW CHAT MODAL -->
+  <div id="modal-backdrop" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-tabs">
+        <button id="tab-create" class="tab-btn active">Create</button>
+        <button id="tab-join" class="tab-btn">Join with code</button>
+        <button id="tab-dm" class="tab-btn">Message someone</button>
+        <button id="tab-friends" class="tab-btn">Friends</button>
+      </div>
+      <div id="pane-create">
+        <input id="create-name-input" class="input" placeholder="Chat name (e.g. Study group)" maxlength="40" />
+        <input id="create-description-input" class="input" placeholder="Group description (optional)" maxlength="140" />
+        <div id="create-error" class="error"></div>
+        <button id="create-btn" class="button full">Create chat</button>
+      </div>
+      <div id="pane-join" class="hidden">
+        <input id="join-code-input" class="input upper code-mono" placeholder="Invite code" maxlength="8" />
+        <div id="join-error" class="error"></div>
+        <button id="join-btn" class="button full">Join chat</button>
+      </div>
+      <div id="pane-dm" class="hidden">
+        <input id="dm-username-input" class="input" placeholder="Their username" maxlength="24" />
+        <div id="dm-error" class="error"></div>
+        <button id="dm-btn" class="button full">Start chat</button>
+      </div>
+      <div class="modal-gap"></div>
+      <button id="modal-cancel" class="button full ghost">Cancel</button>
+    </div>
+  </div>
+
+  <!-- FORWARD MESSAGE MODAL -->
+  <div id="modal-forward-backdrop" class="modal-backdrop hidden">
+    <div class="modal forward-modal">
+      <div class="modal-header"><div class="modal-title">Forward message</div><button id="forward-close-btn" class="icon-btn" aria-label="Close">✕</button></div>
+      <div class="forward-copy">Choose a conversation to receive this message.</div>
+      <div id="forward-chat-list" class="forward-chat-list"></div>
+      <div class="modal-gap"></div><button id="forward-send-btn" class="button full" disabled>Forward</button>
+    </div>
+  </div>
+
+  <!-- EDIT GROUP MODAL -->
+  <div id="modal-groupedit-backdrop" class="modal-backdrop hidden"><div class="modal">
+    <div class="modal-header"><div class="modal-title">Edit group details</div><button id="groupedit-close-btn" class="icon-btn" aria-label="Close">✕</button></div>
+    <input id="groupedit-name-input" class="input" maxlength="40" placeholder="Group name" />
+    <textarea id="groupedit-description-input" class="input textarea" maxlength="140" rows="3" placeholder="Group description (optional)"></textarea>
+    <div id="groupedit-error" class="error"></div><button id="groupedit-save-btn" class="button full">Save changes</button>
+  </div></div>
+
+  <!-- CONFIRMATION MODAL -->
+  <div id="modal-confirm-backdrop" class="modal-backdrop hidden"><div class="modal confirm-modal">
+    <div id="confirm-title" class="modal-title">Are you sure?</div><div id="confirm-text" class="confirm-text"></div>
+    <div class="confirm-actions"><button id="confirm-cancel-btn" class="button ghost">Cancel</button><button id="confirm-ok-btn" class="button danger-button">Confirm</button></div>
+  </div></div>
+
+  <!-- REPORT USER MODAL -->
+  <div id="modal-report-backdrop" class="modal-backdrop hidden"><div class="modal">
+    <div class="modal-header"><div class="modal-title">Report user</div><button id="report-close-btn" class="icon-btn" aria-label="Close">✕</button></div>
+    <div id="report-user-label" class="report-user-label"></div><textarea id="report-reason-input" class="input textarea" maxlength="300" rows="4" placeholder="Tell us what happened…"></textarea><div id="report-error" class="error"></div><button id="report-send-btn" class="button full">Send report</button>
+  </div></div>
+
+  <!-- EDIT PROFILE MODAL -->
+  <div id="modal-profile-backdrop" class="modal-backdrop hidden">
+    <div class="modal profile-edit-modal">
+      <button id="profile-close-top-btn" class="profile-close-top icon-btn" aria-label="Close profile editor">✕</button>
+      <div class="modal-title">Edit profile</div>
+      <div class="profile-avatar-row">
+        <div id="profile-avatar-preview" class="avatar xlarge"></div>
+        <div class="profile-avatar-actions">
+          <label for="profile-photo-input" class="button ghost small">Change photo</label>
+          <input id="profile-photo-input" type="file" accept="image/*" class="hidden" />
+          <button id="profile-remove-photo-btn" class="link-btn">Remove photo</button>
+        </div>
+      </div>
+      <div class="profile-field-label">Display name</div>
+      <input id="profile-name-input" class="input" placeholder="Display name" maxlength="40" />
+      <div class="profile-username-lock"><span>Username</span><strong id="profile-username-locked">@username</strong><small>Used for sign in and can’t be changed.</small></div>
+      <div class="modal-gap-sm"></div>
+      <input id="profile-status-input" class="input" placeholder="Status (optional) — e.g. busy, at the gym" maxlength="60" />
+      <div class="modal-gap-sm"></div>
+      <textarea id="profile-bio-input" class="input textarea" placeholder="Bio (optional) — a short line about you" maxlength="150" rows="3"></textarea>
+      <div id="profile-error" class="error"></div>
+      <div class="profile-hint">Your username for signing in doesn't change — this is just the name and photo others see.</div>
+      <div class="app-lock-row privacy-row">
+        <div><div class="app-lock-title">Last seen privacy</div><div class="app-lock-subtitle">Only friends and owners can see when you were last active</div></div>
+        <label class="switch"><input type="checkbox" id="last-seen-privacy-toggle" /><span class="switch-slider"></span></label>
+      </div>
+      <div id="app-lock-row" class="app-lock-row hidden">
+        <div>
+          <div class="app-lock-title">App lock</div>
+          <div class="app-lock-subtitle">Require fingerprint/face unlock to open BetaChat</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="app-lock-toggle" />
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+      <div class="modal-gap"></div>
+      <button id="profile-save-btn" class="button full">Save</button>
+      <button id="profile-cancel-btn" class="button full ghost">Cancel</button>
+    </div>
+  </div>
+
+  <!-- DISAPPEARING MESSAGES MODAL -->
+  <div id="modal-disappearing-backdrop" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-title">Disappearing messages</div>
+      <div class="wallpaper-hint">New messages sent after you turn this on will automatically delete for everyone after the chosen time. This doesn't affect older messages.</div>
+      <div id="disappearing-options" class="disappearing-options">
+        <button class="disappearing-option" data-seconds="0">Off</button>
+        <button class="disappearing-option" data-seconds="3600">1 hour</button>
+        <button class="disappearing-option" data-seconds="86400">24 hours</button>
+        <button class="disappearing-option" data-seconds="604800">7 days</button>
+      </div>
+      <div class="modal-gap"></div>
+      <button id="disappearing-close-btn" class="button full ghost">Close</button>
+    </div>
+  </div>
+
+  <!-- WALLPAPER MODAL -->
+  <div id="modal-wallpaper-backdrop" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-title">Chat wallpaper</div>
+      <div class="wallpaper-hint">Pick a theme, or upload your own photo. This only changes how this chat looks on your device.</div>
+      <div id="wallpaper-preview" class="wallpaper-preview"><span class="preview-bubble theirs">Hello 👋</span><span class="preview-bubble mine">Looks great!</span></div>
+      <div id="wallpaper-grid" class="wallpaper-grid"></div>
+      <div class="modal-gap-sm"></div>
+      <label for="wallpaper-upload-input" class="button ghost full">Upload your own image</label>
+      <input id="wallpaper-upload-input" type="file" accept="image/*" class="hidden" />
+      <div class="modal-gap-sm"></div>
+      <button id="wallpaper-reset-btn" class="button ghost full">Reset to default</button>
+      <button id="wallpaper-close-btn" class="button full">Done</button>
+    </div>
+  </div>
+
+  <!-- FRIENDS MODAL -->
+  <div id="modal-friends-backdrop" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-title">Friends</div>
+      <div class="friend-add-row">
+        <input id="friend-add-input" class="input" placeholder="Add by username" />
+        <button id="friend-add-btn" class="button">Send</button>
+      </div>
+      <div id="friend-add-error" class="error"></div>
+      <div class="modal-tabs">
+        <button id="friends-tab-requests" class="tab-btn active">Requests</button>
+        <button id="friends-tab-list" class="tab-btn">Friends</button>
+      </div>
+      <div id="friends-pane-requests" class="friends-pane">
+        <div class="friends-subtitle">Incoming</div>
+        <div id="friend-requests-list" class="members-list friends-scroll"></div>
+        <div class="friends-subtitle">Sent</div>
+        <div id="friend-sent-list" class="members-list friends-scroll"></div>
+      </div>
+      <div id="friends-pane-list" class="friends-pane hidden">
+        <div id="friends-list" class="members-list friends-scroll"></div>
+      </div>
+      <div class="modal-gap"></div>
+      <button id="friends-close-btn" class="button full ghost">Close</button>
+    </div>
+  </div>
+
+  <!-- ADD STORY: choose type -->
+  <div id="modal-addstory-backdrop" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-title">Add to your story</div>
+      <button id="story-add-photo-btn" class="button full">🖼 Photo</button>
+      <div class="modal-gap-sm"></div>
+      <button id="story-add-text-btn" class="button full ghost">Aa Text</button>
+      <div class="modal-gap"></div>
+      <button id="story-add-cancel-btn" class="button full ghost">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ADD STORY: text composer -->
+  <div id="modal-textstory-backdrop" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-title">Text story</div>
+      <div id="textstory-preview" class="textstory-preview" data-bg="0">
+        <textarea id="textstory-input" class="textstory-input" maxlength="180" placeholder="Say something…"></textarea>
+      </div>
+      <div id="textstory-colors" class="textstory-colors"></div>
+      <div id="textstory-error" class="error"></div>
+      <div class="modal-gap"></div>
+      <button id="textstory-post-btn" class="button full">Share to story</button>
+      <button id="textstory-cancel-btn" class="button full ghost">Cancel</button>
+    </div>
+  </div>
+
+  <!-- STORY VIEWER (fullscreen) -->
+  <div id="story-viewer" class="story-viewer hidden">
+    <div id="story-progress-bars" class="story-progress-bars"></div>
+    <div class="story-viewer-header">
+      <div id="story-viewer-avatar" class="avatar small"></div>
+      <div class="story-viewer-headtext">
+        <div id="story-viewer-name" class="story-viewer-name"></div>
+        <div id="story-viewer-time" class="story-viewer-time"></div>
+      </div>
+      <button id="story-viewer-close" class="icon-btn small-icon-btn">✕</button>
+    </div>
+    <div id="story-viewer-content" class="story-viewer-content"></div>
+    <div class="story-viewer-nav">
+      <div id="story-nav-prev" class="story-nav-zone"></div>
+      <div id="story-nav-next" class="story-nav-zone"></div>
+    </div>
+    <div id="story-viewer-footer" class="story-viewer-footer hidden">
+      <button id="story-delete-btn" class="link-btn">Delete this story</button>
+      <button id="story-reply-btn" class="story-reply-btn hidden">Reply</button>
+      <div id="story-reaction-bar" class="story-reaction-bar"></div>
+      <div id="story-viewers-count" class="story-viewers-count"></div>
+    </div>
+  </div>
+
+  <!-- PROFILE VIEW (someone's profile page) -->
+  <div id="modal-profileview-backdrop" class="modal-backdrop hidden">
+    <div class="modal profile-view-modal">
+      <div class="profile-view-header">
+        <div id="profileview-avatar" class="avatar xlarge"></div>
+        <div id="profileview-name" class="profile-view-name"></div>
+        <div id="profileview-username" class="profile-view-username"></div>
+        <div id="profileview-status" class="profile-view-status"></div>
+        <div id="profileview-bio" class="profile-view-bio"></div>
+        <div class="profile-view-stats">
+          <div class="profile-view-stat">
+            <div id="profileview-friends-count" class="profile-view-stat-num">0</div>
+            <div class="profile-view-stat-label">Friends</div>
+          </div>
+        </div>
+        <div id="profileview-actions" class="profile-view-actions"></div>
+      </div>
+      <div id="profileview-grid-title" class="profile-view-grid-title hidden">Story photos</div>
+      <div id="profileview-grid" class="profile-view-grid"></div>
+      <div class="modal-gap"></div>
+      <button id="profileview-close-btn" class="button full ghost">Close</button>
+    </div>
+  </div>
+
+  <!-- REPORTS (admins and owners) -->
+  <div id="modal-reports-backdrop" class="modal-backdrop hidden"><div class="modal reports-modal">
+    <div class="modal-header"><div class="modal-title">Reports</div><button id="reports-close-btn" class="icon-btn" aria-label="Close">✕</button></div>
+    <div id="reports-list" class="reports-list"></div>
+  </div></div>
+
+  <!-- MANAGE USERS (owner only) -->
+  <div id="modal-manageusers-backdrop" class="modal-backdrop hidden">
+    <button id="manageusers-close-float-btn" class="manageusers-close-float" aria-label="Close owner dashboard">✕</button>
+    <div class="modal manage-users-modal">
+      <div class="manage-users-titlebar"><h3>Manage users</h3><button id="manageusers-close-top-btn" class="icon-btn" aria-label="Close manage users">✕</button></div>
+      <input id="manageusers-search" class="input" placeholder="Search username…" />
+      <div id="manageusers-list" class="manageusers-list"></div>
+      <div class="modal-gap"></div>
+      <button id="manageusers-close-btn" class="button full ghost">Close</button>
+    </div>
+  </div>
+
+  <!-- OWNER DASHBOARD (permanent owners only) -->
+  <div id="modal-owner-dashboard-backdrop" class="modal-backdrop hidden">
+    <div class="modal owner-dashboard-modal">
+      <div class="manage-users-titlebar"><h3>Owner dashboard</h3><button id="owner-dashboard-close-btn" class="icon-btn" aria-label="Close owner dashboard">✕</button></div>
+      <div id="owner-dashboard" class="owner-dashboard hidden">
+        <div class="owner-dashboard-head"><span>Owner dashboard</span><button id="owner-metrics-refresh" class="link-btn">Refresh</button></div>
+        <div class="owner-stats"><div><strong id="owner-stat-users">—</strong><span>Total users</span></div><div><strong id="owner-stat-messages">—</strong><span>Messages today</span></div><div><strong id="owner-stat-active">—</strong><span>Active this week</span></div></div>
+        <div class="broadcast-row"><input id="broadcast-input" class="input" maxlength="500" placeholder="Write an announcement for everyone…" /><button id="broadcast-btn" class="button">Broadcast</button></div>
+        <div id="owner-dashboard-status" class="member-row-status"></div>
+        <div class="audit-head"><span>Recent activity</span><button id="owner-audit-refresh" class="link-btn">Refresh</button></div>
+        <div id="owner-audit-list" class="owner-audit-list">Loading activity…</div>
+      </div>
+      <button id="owner-dashboard-close-bottom-btn" class="button full ghost">Close</button>
+    </div>
+  </div>
+
+  <!-- BOT REQUESTS / CONVERSATIONS (owner only) -->
+  <div id="modal-botrequests-backdrop" class="modal-backdrop hidden">
+    <div class="modal">
+      <h3>🤖 Admin help requests &amp; bot conversations</h3>
+      <div class="subtitle">Appointment requests appear at top. Tap anyone to open their full bot chat.</div>
+      <div id="botrequests-list" class="manageusers-list"></div>
+      <div class="modal-gap"></div>
+      <button id="botrequests-close-btn" class="button full ghost">Close</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
